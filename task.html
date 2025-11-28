@@ -9,6 +9,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Chart.js for Graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,6 +31,8 @@
                         'float': 'float 6s ease-in-out infinite',
                         'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
                         'pulse-glow': 'pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-slight': 'bounceSlight 2s infinite',
+                        'scale-in': 'scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
                     },
                     keyframes: {
                         float: {
@@ -42,6 +46,14 @@
                         pulseGlow: {
                             '0%, 100%': { opacity: 1, filter: 'brightness(1.2)' },
                             '50%': { opacity: 0.7, filter: 'brightness(1)' },
+                        },
+                        bounceSlight: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-3px)' }
+                        },
+                        scaleIn: {
+                            '0%': { transform: 'scale(0.5)', opacity: 0 },
+                            '100%': { transform: 'scale(1)', opacity: 1 }
                         }
                     },
                     colors: {
@@ -108,6 +120,16 @@
             position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: auto; height: auto; color: transparent; background: transparent;
         }
         input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.6; cursor: pointer; }
+
+        /* Flame Animation for Popup */
+        .flame-anim {
+            animation: flameFlicker 1.5s ease-in-out infinite;
+            transform-origin: bottom center;
+        }
+        @keyframes flameFlicker {
+            0%, 100% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.1); filter: brightness(1.3); }
+        }
     </style>
 </head>
 <body class="h-[100dvh] flex flex-col">
@@ -144,6 +166,15 @@
             </div>
 
             <div class="flex items-center gap-3 w-full md:w-auto">
+                <!-- Streak Display -->
+                <div id="streakContainer" class="glass-panel px-3 py-2 rounded-xl flex items-center gap-2 animate-pulse-glow border-orange-500/20 bg-orange-500/5">
+                    <i data-lucide="flame" class="w-5 h-5 text-orange-500 fill-orange-500 animate-bounce-slight"></i>
+                    <div class="flex flex-col leading-none">
+                        <span id="streakCount" class="font-display font-bold text-white text-sm">0</span>
+                        <span class="text-[9px] text-orange-300 uppercase tracking-wider font-bold">Streak</span>
+                    </div>
+                </div>
+
                 <button id="reportBtn" onclick="toggleView()" class="glass-panel hover:bg-white/5 px-4 py-3 rounded-xl flex items-center gap-2 text-sm font-medium transition-all flex-1 md:flex-none justify-center text-gray-300 hover:text-white active:scale-95">
                     <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
                     <span>Insights</span>
@@ -206,10 +237,56 @@
                         <button onclick="setDailyMode('calendar')" id="btnCalendarMode" class="p-2 rounded-lg transition-all text-gray-400 hover:text-white"><i data-lucide="calendar" class="w-4 h-4"></i></button>
                     </div>
                     
-                    <button onclick="downloadPDF()" class="btn-glow bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/50 text-purple-200 px-4 py-2 rounded-xl flex items-center gap-2 text-xs font-bold transition-all h-10">
+                    <button onclick="openPdfModal()" class="btn-glow bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/50 text-purple-200 px-4 py-2 rounded-xl flex items-center gap-2 text-xs font-bold transition-all h-10">
                         <i data-lucide="file-down" class="w-4 h-4"></i>
                         <span>PDF</span>
                     </button>
+                </div>
+            </div>
+            
+            <!-- Graph Container (Updated with Week Navigation) -->
+            <div id="graphMainWrapper" class="glass-panel p-5 rounded-2xl shrink-0 flex flex-col gap-4">
+                
+                <!-- Graph Header -->
+                <div class="flex justify-between items-center border-b border-white/5 pb-3">
+                    <div class="flex items-center gap-2">
+                        <div class="p-2 bg-purple-500/20 rounded-lg text-purple-400"><i data-lucide="activity" class="w-4 h-4"></i></div>
+                        <h3 class="font-bold text-white text-sm">Productivity Trend</h3>
+                    </div>
+                    
+                    <!-- Week Navigation Arrows -->
+                    <div class="flex items-center gap-2 bg-white/5 rounded-lg p-1">
+                        <button onclick="changeGraphWeek(-1)" class="p-1 hover:bg-white/10 rounded-md text-gray-400 hover:text-white transition-colors">
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                        </button>
+                        <span id="graphDateRange" class="text-[10px] font-mono text-gray-300 px-2 min-w-[140px] text-center font-bold">--</span>
+                        <button onclick="changeGraphWeek(1)" class="p-1 hover:bg-white/10 rounded-md text-gray-400 hover:text-white transition-colors">
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Top Stats Row -->
+                <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-2">
+                    <div class="bg-white/5 rounded-xl p-3 flex flex-col items-center justify-center border border-white/5">
+                        <span class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-1">Avg Score</span>
+                        <span id="statAvgScore" class="font-mono text-xl font-bold text-white">0%</span>
+                    </div>
+                    <div class="bg-white/5 rounded-xl p-3 flex flex-col items-center justify-center border border-white/5">
+                        <span class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-1">Best Day</span>
+                        <span id="statBestDay" class="font-display text-sm font-bold text-purple-300">-</span>
+                    </div>
+                    <div class="bg-white/5 rounded-xl p-3 flex flex-col items-center justify-center border border-white/5">
+                        <span class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-1">Momentum</span>
+                        <div id="statMomentum" class="flex items-center gap-1 text-sm font-bold text-gray-400">
+                            <span>-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart Area -->
+                <div class="relative h-56 w-full min-h-0">
+                    <canvas id="progressChart"></canvas>
                 </div>
             </div>
 
@@ -220,7 +297,7 @@
 
     </div>
 
-    <!-- Add Task Input (Redesigned for Mobile & Desktop) -->
+    <!-- Add Task Input -->
     <div id="inputContainer" class="fixed bottom-0 left-0 w-full z-50">
         <!-- Gradient backdrop for readability -->
         <div class="absolute inset-0 bg-gradient-to-t from-[#050507] via-[#050507]/95 to-transparent pointer-events-none h-[150%] -top-[50%]"></div>
@@ -272,6 +349,77 @@
         </div>
     </div>
 
+    <!-- Streak Week Popup -->
+    <div id="streakPopup" class="fixed inset-0 z-[80] flex items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300 px-4">
+        <div class="absolute inset-0 bg-black/90 backdrop-blur-md"></div>
+        <div id="streakPopupContent" class="relative bg-[#101012] border border-orange-500/30 p-6 rounded-3xl shadow-[0_0_50px_rgba(249,115,22,0.2)] w-full max-w-md text-center transform scale-95 transition-all duration-500">
+            <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-32 h-32 bg-orange-500/20 rounded-full blur-3xl"></div>
+            
+            <div class="mb-4 inline-flex p-3 rounded-2xl bg-orange-500/10 border border-orange-500/20">
+                <i data-lucide="flame" class="w-10 h-10 text-orange-500 fill-orange-500 flame-anim"></i>
+            </div>
+            
+            <h2 class="text-2xl font-display font-bold text-white mb-1">Daily Goals Complete!</h2>
+            <p id="streakPopupCount" class="text-orange-400 font-bold tracking-widest uppercase text-sm mb-6">Current Streak: 0 Days</p>
+
+            <!-- Weekly Visual Grid -->
+            <div id="weeklyStreakGrid" class="flex justify-between items-center gap-2 mb-8 bg-white/5 p-4 rounded-2xl border border-white/5">
+                <!-- JS Injected Circles -->
+            </div>
+
+            <button onclick="closeStreakPopup()" class="btn-glow bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold py-3 px-8 rounded-xl text-sm w-full shadow-lg shadow-orange-500/20">
+                Keep the Streak Alive!
+            </button>
+        </div>
+    </div>
+    
+    <!-- PDF Selection Modal -->
+    <div id="pdfModal" class="fixed inset-0 z-[90] flex items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300 px-4">
+        <div class="absolute inset-0 bg-black/90 backdrop-blur-md"></div>
+        <div id="pdfModalContent" class="relative bg-[#101012] border border-purple-500/30 p-6 rounded-3xl shadow-[0_0_50px_rgba(139,92,246,0.2)] w-full max-w-md transform scale-95 transition-all duration-500 flex flex-col gap-4">
+            
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-xl font-bold text-white font-display">Download Report</h3>
+                <button onclick="closePdfModal()" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            
+            <p class="text-gray-400 text-sm mb-2">Select the format for your productivity report:</p>
+
+            <!-- Option 1: Monthly Daily List (Updated) -->
+            <button onclick="generatePDF('list')" class="flex items-center gap-4 bg-white/5 hover:bg-white/10 p-4 rounded-2xl border border-white/10 hover:border-purple-500/50 transition-all group text-left">
+                <div class="bg-purple-500/10 p-3 rounded-xl text-purple-400 group-hover:scale-110 transition-transform">
+                    <i data-lucide="list" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-white">Monthly Daily Report</h4>
+                    <p class="text-xs text-gray-500">Detailed breakdown of daily performance.</p>
+                </div>
+            </button>
+
+            <!-- Option 2: Visual Calendar (Updated with Icons) -->
+            <button onclick="generatePDF('calendar')" class="flex items-center gap-4 bg-white/5 hover:bg-white/10 p-4 rounded-2xl border border-white/10 hover:border-blue-500/50 transition-all group text-left">
+                <div class="bg-blue-500/10 p-3 rounded-xl text-blue-400 group-hover:scale-110 transition-transform">
+                    <i data-lucide="calendar" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-white">Visual Calendar</h4>
+                    <p class="text-xs text-gray-500">Visual grid with performance badges.</p>
+                </div>
+            </button>
+
+            <!-- Option 3: Weekly Graph -->
+            <button onclick="generatePDF('graph')" class="flex items-center gap-4 bg-white/5 hover:bg-white/10 p-4 rounded-2xl border border-white/10 hover:border-pink-500/50 transition-all group text-left">
+                <div class="bg-pink-500/10 p-3 rounded-xl text-pink-400 group-hover:scale-110 transition-transform">
+                    <i data-lucide="activity" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-white">Weekly Graph Analysis</h4>
+                    <p class="text-xs text-gray-500">Visual charts and trend analysis.</p>
+                </div>
+            </button>
+        </div>
+    </div>
+
     <!-- Toast Container -->
     <div id="toastContainer" class="fixed top-4 left-4 right-4 sm:left-auto sm:right-6 sm:w-auto z-[70] flex flex-col gap-3 pointer-events-none items-center sm:items-end"></div>
 
@@ -287,15 +435,19 @@
         let insightType = 'monthly'; 
         let dailyViewMode = 'list'; 
         let calendarViewDate = new Date(); 
+        
+        // Graph State
+        let chartInstance = null;
+        let currentGraphDate = new Date(); // Represents the end date of the week being viewed
 
         const priorities = ['low', 'medium', 'high'];
         const motivationalQuotes = [
             "The only way to do great work is to love what you do.",
             "Believe you can and you're halfway there.",
-            "Your limitation—it's only your imagination.",
+            "Your limitation it's only your imagination.",
             "Push yourself, because no one else is going to do it for you.",
             "Great things never come from comfort zones.",
-            "Success doesn’t just find you. You have to go out and get it.",
+            "Success doesn't just find you. You have to go out and get it.",
             "The harder you work for something, the greater you'll feel when you achieve it.",
             "Don't stop when you're tired. Stop when you're done.",
             "Little things make big days.",
@@ -343,72 +495,351 @@
             userNameInput: document.getElementById('userNameInput'),
             quoteOverlay: document.getElementById('quoteOverlay'),
             quoteText: document.getElementById('quoteText'),
-            inputContainer: document.getElementById('inputContainer')
+            inputContainer: document.getElementById('inputContainer'),
+            streakCount: document.getElementById('streakCount'),
+            graphContainer: document.getElementById('graphMainWrapper'),
+            streakPopup: document.getElementById('streakPopup'),
+            streakPopupContent: document.getElementById('streakPopupContent'),
+            weeklyStreakGrid: document.getElementById('weeklyStreakGrid'),
+            streakPopupCount: document.getElementById('streakPopupCount'),
+            // Stats
+            statAvgScore: document.getElementById('statAvgScore'),
+            statBestDay: document.getElementById('statBestDay'),
+            statMomentum: document.getElementById('statMomentum'),
+            graphDateRange: document.getElementById('graphDateRange'),
+            pdfModal: document.getElementById('pdfModal'),
+            pdfModalContent: document.getElementById('pdfModalContent')
         };
 
-        // --- PDF Logic ---
-        window.downloadPDF = () => {
+        // --- STREAK LOGIC ---
+        const isDayComplete = (dateStr) => {
+            const dayTasks = tasks.filter(t => t.date.startsWith(dateStr));
+            if (dayTasks.length === 0) return false; 
+            return dayTasks.every(t => t.completed);
+        };
+
+        const calculateStreak = () => {
+            const uniqueDates = new Set(tasks.map(t => t.date.split('T')[0]));
+            if (uniqueDates.size === 0) return 0;
+
+            let streak = 0;
+            let checkDate = new Date();
+            let checkStr = checkDate.toISOString().split('T')[0];
+
+            const hasTasksToday = uniqueDates.has(checkStr);
+            
+            if (hasTasksToday) {
+                if (isDayComplete(checkStr)) {
+                    streak++;
+                    checkDate.setDate(checkDate.getDate() - 1);
+                    checkStr = checkDate.toISOString().split('T')[0];
+                } else {
+                    checkDate.setDate(checkDate.getDate() - 1);
+                    checkStr = checkDate.toISOString().split('T')[0];
+                }
+            } else {
+                 checkDate.setDate(checkDate.getDate() - 1);
+                 checkStr = checkDate.toISOString().split('T')[0];
+            }
+
+            while (true) {
+                if (uniqueDates.has(checkStr)) {
+                    if (isDayComplete(checkStr)) {
+                        streak++;
+                        checkDate.setDate(checkDate.getDate() - 1);
+                        checkStr = checkDate.toISOString().split('T')[0];
+                    } else {
+                        break; 
+                    }
+                } else {
+                     break; 
+                }
+            }
+            return streak;
+        };
+
+        const showStreakPopup = () => {
+            const streak = calculateStreak();
+            DOM.streakPopupCount.textContent = `Current Streak: ${streak} Day${streak !== 1 ? 's' : ''}`;
+            
+            DOM.weeklyStreakGrid.innerHTML = '';
+            
+            const today = new Date();
+            const dayOfWeek = today.getDay(); 
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - dayOfWeek); 
+
+            const getDayStatus = (d) => {
+                const dStr = d.toISOString().split('T')[0];
+                const tasksForDay = tasks.filter(t => t.date.startsWith(dStr));
+                
+                if (tasksForDay.length === 0) return 'empty'; 
+                const allDone = tasksForDay.every(t => t.completed);
+                
+                if (allDone) return 'complete'; 
+                if (d < today) return 'missed';
+                if (isSameDay(d, today)) return 'today'; 
+                return 'pending'; 
+            };
+
+            const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+            for (let i = 0; i < 7; i++) {
+                const currentDay = new Date(startOfWeek);
+                currentDay.setDate(startOfWeek.getDate() + i);
+                
+                const status = getDayStatus(currentDay);
+                
+                const el = document.createElement('div');
+                el.className = "flex flex-col items-center gap-2";
+                
+                let iconHtml = '';
+                if (status === 'complete') {
+                    iconHtml = `<div class="w-8 h-8 rounded-full bg-orange-500/20 border border-orange-500/50 flex items-center justify-center text-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.3)]"><i data-lucide="flame" class="w-4 h-4 fill-orange-500"></i></div>`;
+                } else if (status === 'missed') {
+                    iconHtml = `<div class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-500"><i data-lucide="x" class="w-4 h-4"></i></div>`;
+                } else {
+                    iconHtml = `<div class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-600"></div>`;
+                }
+
+                el.innerHTML = `
+                    <span class="text-[10px] font-bold text-gray-400 font-mono">${days[i]}</span>
+                    ${iconHtml}
+                `;
+                DOM.weeklyStreakGrid.appendChild(el);
+            }
+
+            DOM.streakPopup.classList.remove('opacity-0', 'pointer-events-none');
+            DOM.streakPopupContent.classList.remove('scale-95');
+            DOM.streakPopupContent.classList.add('scale-100');
+            lucide.createIcons();
+        };
+
+        window.closeStreakPopup = () => {
+            DOM.streakPopup.classList.add('opacity-0', 'pointer-events-none');
+            DOM.streakPopupContent.classList.add('scale-95');
+            DOM.streakPopupContent.classList.remove('scale-100');
+        };
+
+        // --- PDF Modal Logic ---
+        window.openPdfModal = () => {
+            DOM.pdfModal.classList.remove('opacity-0', 'pointer-events-none');
+            DOM.pdfModalContent.classList.remove('scale-95');
+            DOM.pdfModalContent.classList.add('scale-100');
+        };
+
+        window.closePdfModal = () => {
+            DOM.pdfModal.classList.add('opacity-0', 'pointer-events-none');
+            DOM.pdfModalContent.classList.add('scale-95');
+            DOM.pdfModalContent.classList.remove('scale-100');
+        };
+
+        // --- PDF Generation Logic ---
+        window.generatePDF = (type) => {
+            closePdfModal();
             const element = document.createElement('div');
-            element.style.width = '750px'; 
+            element.style.width = '780px'; 
             element.style.padding = '40px';
             element.style.fontFamily = "'Inter', sans-serif";
             element.style.backgroundColor = '#ffffff';
             element.style.color = '#1f2937';
 
-            const title = insightType === 'monthly' ? 'Monthly Insights Report' : 'Daily Performance Report';
             const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-            
-            let rowsHtml = '';
-            
-            if (insightType === 'monthly') {
-                const months = {};
-                tasks.forEach(task => {
-                    const d = new Date(task.date);
-                    const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                    if (!months[k]) months[k] = { total: 0, completed: 0, date: d };
-                    months[k].total++;
-                    if (task.completed) months[k].completed++;
-                });
-                const sortedKeys = Object.keys(months).sort().reverse();
-                sortedKeys.forEach(key => {
-                    const data = months[key];
-                    const label = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(data.date);
-                    rowsHtml += createPdfRow(label, data.completed, data.total);
-                });
-            } else {
-                const days = getAggregatedDays();
-                const sortedKeys = Object.keys(days).sort().reverse();
-                sortedKeys.forEach(key => {
-                    const data = days[key];
-                    const label = new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }).format(data.date);
-                    rowsHtml += createPdfRow(label, data.completed, data.total);
-                });
-            }
+            let contentHtml = '';
+            let reportTitle = '';
 
-            if (!rowsHtml) rowsHtml = '<div style="padding: 20px; text-align: center; color: #6b7280;">No data available for this report.</div>';
-
-            element.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #8b5cf6; padding-bottom: 20px;">
+            // Common Header
+            const headerHtml = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 3px solid #7c3aed; padding-bottom: 20px;">
                     <div>
-                        <h1 style="font-size: 28px; font-weight: 700; color: #111827; margin: 0;">${title}</h1>
-                        <p style="color: #6b7280; margin: 5px 0 0 0; font-size: 14px;">Prepared for <span style="color: #8b5cf6; font-weight: 600;">${userName}</span></p>
+                        <h1 style="font-size: 32px; font-weight: 800; color: #111827; margin: 0; letter-spacing: -0.5px;">Goal <span style="color: #7c3aed;">Sync</span></h1>
+                        <p style="color: #6b7280; margin: 5px 0 0 0; font-size: 14px; font-weight: 500;">Performance Report for <span style="color: #111827; font-weight: 700;">${userName}</span></p>
                     </div>
                     <div style="text-align: right;">
-                        <p style="color: #6b7280; font-size: 12px; margin: 0;">Generated on</p>
-                        <p style="color: #111827; font-weight: 500; font-size: 14px; margin: 0;">${dateStr}</p>
+                        <p style="color: #9ca3af; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin: 0;">Generated on</p>
+                        <p style="color: #111827; font-weight: 600; font-size: 14px; margin: 2px 0 0 0;">${dateStr}</p>
                     </div>
                 </div>
-                <div style="background: #f9fafb; border-radius: 8px; padding: 10px;">
-                    ${rowsHtml}
+            `;
+
+            // --- Type 1: Monthly Daily List (Updated from Monthly List) ---
+            if (type === 'list') {
+                reportTitle = 'Daily Breakdown Report';
+                let rowsHtml = '';
+                // Use Daily Data instead of Monthly Aggregation
+                const days = getAggregatedDays();
+                const sortedKeys = Object.keys(days).sort().reverse();
+                
+                sortedKeys.forEach(key => {
+                    const data = days[key];
+                    const dateObj = data.date;
+                    const dateLabel = new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).format(dateObj);
+                    const percent = Math.round((data.completed / data.total) * 100) || 0;
+                    
+                    let color = '#ef4444';
+                    let badgeIcon = '⚠️';
+                    let grade = 'D';
+                    let bg = '#fee2e2';
+
+                    if (percent === 100) { color = '#ca8a04'; badgeIcon = '🏆'; grade = 'S'; bg = '#fef9c3'; }
+                    else if (percent >= 80) { color = '#059669'; badgeIcon = '⭐'; grade = 'A'; bg = '#d1fae5'; }
+                    else if (percent >= 60) { color = '#2563eb'; badgeIcon = '📈'; grade = 'B'; bg = '#dbeafe'; }
+                    else if (percent >= 40) { color = '#9333ea'; badgeIcon = '🎯'; grade = 'C'; bg = '#f3e8ff'; }
+
+                    rowsHtml += `
+                        <div style="display: flex; align-items: center; background: #ffffff; border: 1px solid #f3f4f6; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                            
+                            <div style="width: 60px; text-align: center; margin-right: 20px;">
+                                <div style="font-weight: 800; font-size: 24px; color: ${color}; line-height: 1;">${grade}</div>
+                                <div style="font-size: 10px; font-weight: 600; color: #9ca3af; margin-top: 4px;">GRADE</div>
+                            </div>
+
+                            <div style="flex: 1; border-left: 2px solid #f3f4f6; padding-left: 20px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <h3 style="font-size: 15px; font-weight: 700; color: #1f2937; margin: 0;">${dateLabel}</h3>
+                                    <div style="font-size: 14px; font-weight: 600; color: ${color}; display: flex; align-items: center; gap: 6px;">
+                                        <span>${badgeIcon}</span> <span>${percent}%</span>
+                                    </div>
+                                </div>
+                                <div style="width: 100%; background: #f3f4f6; height: 8px; border-radius: 99px; overflow: hidden;">
+                                    <div style="width: ${percent}%; background: ${color}; height: 100%;"></div>
+                                </div>
+                                <div style="margin-top: 6px; font-size: 11px; color: #6b7280; font-weight: 500;">
+                                    ${data.completed} out of ${data.total} tasks completed
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                if(!rowsHtml) rowsHtml = '<div style="padding: 40px; text-align: center; color: #6b7280; background: #f9fafb; border-radius: 12px;">No activity data found.</div>';
+                
+                contentHtml = `
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                        <div style="width: 4px; height: 24px; background: #7c3aed; border-radius: 2px;"></div>
+                        <h2 style="font-size: 20px; font-weight: 700; color: #111827; margin: 0;">${reportTitle}</h2>
+                    </div>
+                    <div style="background: #fafafa; border-radius: 16px; padding: 20px;">
+                        ${rowsHtml}
+                    </div>
+                `;
+            }
+
+            // --- Type 2: Visual Calendar (Updated with Icons) ---
+            else if (type === 'calendar') {
+                reportTitle = 'Visual Calendar View';
+                
+                const year = calendarViewDate.getFullYear();
+                const month = calendarViewDate.getMonth();
+                const monthName = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(calendarViewDate);
+                
+                let gridHtml = `
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                        <h2 style="font-size: 24px; font-weight: 800; color: #111827; margin: 0;">${monthName}</h2>
+                        <div style="font-size: 12px; color: #6b7280; background: #f3f4f6; padding: 6px 12px; border-radius: 20px;">Monthly Overview</div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 20px;">`;
+                
+                // Header Days
+                ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
+                    gridHtml += `<div style="text-align: center; font-size: 11px; font-weight: 700; color: #9ca3af; padding: 8px; text-transform: uppercase; letter-spacing: 0.5px;">${d}</div>`;
+                });
+
+                const daysData = getAggregatedDays();
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const daysInMonth = lastDay.getDate();
+                const startDayIdx = firstDay.getDay();
+
+                for(let i=0; i<startDayIdx; i++) { gridHtml += `<div></div>`; }
+
+                for(let day=1; day<=daysInMonth; day++) {
+                    const currentDayStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                    const data = daysData[currentDayStr];
+                    let bg = "#f9fafb";
+                    let border = "#e5e7eb";
+                    let textCol = "#d1d5db";
+                    let icon = "";
+                    let contentColor = "#9ca3af";
+                    
+                    if(data) {
+                        const percent = Math.round((data.completed / data.total) * 100) || 0;
+                        textCol = "#ffffff";
+                        if (percent === 100) { bg = "#eab308"; border = "#ca8a04"; icon = "🏆"; contentColor="#ffffff"; }
+                        else if (percent >= 80) { bg = "#10b981"; border = "#059669"; icon = "⭐"; contentColor="#ffffff"; }
+                        else if (percent >= 60) { bg = "#3b82f6"; border = "#2563eb"; icon = "📈"; contentColor="#ffffff"; }
+                        else if (percent >= 40) { bg = "#a855f7"; border = "#9333ea"; icon = "🎯"; contentColor="#ffffff"; }
+                        else { bg = "#ef4444"; border = "#dc2626"; icon = "⚠️"; contentColor="#ffffff"; }
+                    } else {
+                        // Empty days logic
+                        textCol = "#1f2937";
+                    }
+
+                    gridHtml += `
+                        <div style="aspect-ratio: 1; background-color: ${bg}; border: 1px solid ${border}; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; height: 80px;">
+                            <span style="font-size: 14px; font-weight: 700; color: ${data ? '#fff' : '#374151'}; margin-bottom: 4px;">${day}</span>
+                            ${icon ? `<span style="font-size: 18px;">${icon}</span>` : ''}
+                        </div>
+                    `;
+                }
+                gridHtml += `</div>
+                <div style="display: flex; justify-content: center; gap: 15px; margin-top: 10px;">
+                    <div style="display: flex; align-items: center; gap: 5px; font-size: 10px; color: #6b7280;"><span style="color: #eab308">🏆</span> Perfect</div>
+                    <div style="display: flex; align-items: center; gap: 5px; font-size: 10px; color: #6b7280;"><span style="color: #10b981">⭐</span> Excellent</div>
+                    <div style="display: flex; align-items: center; gap: 5px; font-size: 10px; color: #6b7280;"><span style="color: #3b82f6">📈</span> Good</div>
+                    <div style="display: flex; align-items: center; gap: 5px; font-size: 10px; color: #6b7280;"><span style="color: #ef4444">⚠️</span> Needs Work</div>
                 </div>
-                <div style="margin-top: 30px; text-align: center; color: #9ca3af; font-size: 12px;">
-                    Generated by Goal Sync
+                `;
+                contentHtml = `${gridHtml}`;
+            }
+
+            // --- Type 3: Graph ---
+            else if (type === 'graph') {
+                reportTitle = 'Weekly Trend Analysis';
+                // Convert Chart to Base64 Image
+                const canvas = document.getElementById('progressChart');
+                // We create a temporary high-res version or just use current
+                const chartImg = canvas.toDataURL('image/png', 1.0);
+                
+                contentHtml = `
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                        <div style="width: 4px; height: 24px; background: #ec4899; border-radius: 2px;"></div>
+                        <h2 style="font-size: 20px; font-weight: 700; color: #111827; margin: 0;">${reportTitle}</h2>
+                    </div>
+                    <div style="border: 1px solid #e5e7eb; border-radius: 16px; padding: 24px; background: #fafafa; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                        <p style="text-align:center; font-size: 14px; color: #6b7280; font-weight: 600; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px;">
+                            Week of ${DOM.graphDateRange.textContent}
+                        </p>
+                        <img src="${chartImg}" style="width: 100%; height: auto; border-radius: 8px; border: 1px solid #f3f4f6;" />
+                    </div>
+                    <div style="margin-top: 25px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                        <div style="background: #f3f4f6; padding: 20px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 11px; text-transform: uppercase; color: #6b7280; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 5px;">Average</div>
+                            <div style="font-size: 28px; font-weight: 800; color: #111827;">${DOM.statAvgScore.textContent}</div>
+                        </div>
+                        <div style="background: #f3f4f6; padding: 20px; border-radius: 12px; text-align: center;">
+                             <div style="font-size: 11px; text-transform: uppercase; color: #6b7280; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 5px;">Best Day</div>
+                             <div style="font-size: 20px; font-weight: 800; color: #8b5cf6;">${DOM.statBestDay.textContent}</div>
+                        </div>
+                         <div style="background: #f3f4f6; padding: 20px; border-radius: 12px; text-align: center;">
+                             <div style="font-size: 11px; text-transform: uppercase; color: #6b7280; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 5px;">Status</div>
+                             <div style="font-size: 20px; font-weight: 800; color: #10b981;">Active</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            element.innerHTML = `
+                ${headerHtml}
+                ${contentHtml}
+                <div style="margin-top: 40px; text-align: center; border-top: 1px solid #f3f4f6; padding-top: 20px;">
+                    <p style="color: #9ca3af; font-size: 12px; font-weight: 500;">Generated by Goal Sync App</p>
                 </div>
             `;
 
             const opt = {
                 margin: 10,
-                filename: `goals-report-${insightType}.pdf`,
+                filename: `goals-report-${type}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -416,35 +847,170 @@
 
             addToast('Generating PDF...', 'info');
             html2pdf().set(opt).from(element).save().then(() => {
-                addToast('PDF Downloaded Successfully!', 'success');
+                addToast('PDF Downloaded!', 'success');
             }).catch(err => {
                 console.error(err);
                 addToast('Failed to generate PDF.', 'error');
             });
         };
 
-        const createPdfRow = (label, completed, total) => {
-            const percent = Math.round((completed / total) * 100) || 0;
-            let color = '#ef4444';
-            if (percent === 100) color = '#eab308';
-            else if (percent >= 80) color = '#10b981';
-            else if (percent >= 60) color = '#3b82f6';
-            else if (percent >= 40) color = '#a855f7';
+        // --- Chart Logic ---
+        window.changeGraphWeek = (offset) => {
+            currentGraphDate.setDate(currentGraphDate.getDate() + (offset * 7));
+            renderChart();
+        };
 
-            return `
-                <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 10px;">
-                    <div style="flex: 1;">
-                        <h3 style="font-size: 16px; font-weight: 600; color: #1f2937; margin: 0 0 5px 0;">${label}</h3>
-                        <div style="width: 100%; background: #f3f4f6; height: 6px; border-radius: 99px; overflow: hidden;">
-                            <div style="width: ${percent}%; background: ${color}; height: 100%;"></div>
-                        </div>
-                    </div>
-                    <div style="text-align: right; margin-left: 20px; min-width: 100px;">
-                        <div style="font-size: 20px; font-weight: 700; color: ${color};">${percent}%</div>
-                        <div style="font-size: 12px; color: #6b7280;">${completed}/${total} Done</div>
-                    </div>
-                </div>
-            `;
+        const renderChart = () => {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            
+            // Destroy existing chart
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            // --- 1. Prepare Data based on currentGraphDate (Week View) ---
+            const daysData = getAggregatedDays();
+            const labels = [];
+            const dataPoints = [];
+            const rawData = []; 
+            
+            // Calculate Start of the week (7 days ending on currentGraphDate)
+            // Or better: Show the 7 days ending at currentGraphDate? 
+            // Let's do: 7 days ENDING on currentGraphDate to keep logic simple similar to "Last 7 Days"
+            
+            // Format range text
+            const endDate = new Date(currentGraphDate);
+            const startDate = new Date(currentGraphDate);
+            startDate.setDate(endDate.getDate() - 6);
+            
+            const rangeStr = `${new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric'}).format(startDate)} - ${new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric'}).format(endDate)}`;
+            DOM.graphDateRange.textContent = rangeStr;
+
+            for(let i=6; i>=0; i--) { 
+                const d = new Date(currentGraphDate);
+                d.setDate(d.getDate() - i);
+                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                
+                const dayName = new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(d);
+                labels.push(dayName);
+                
+                const dayStat = daysData[key];
+                if(dayStat && dayStat.total > 0) {
+                    const pct = Math.round((dayStat.completed / dayStat.total) * 100);
+                    dataPoints.push(pct);
+                    rawData.push({ completed: dayStat.completed, total: dayStat.total, date: d });
+                } else {
+                    dataPoints.push(0);
+                    rawData.push({ completed: 0, total: 0, date: d });
+                }
+            }
+
+            // --- 2. Calculate Dashboard Stats ---
+            const nonZeroDays = dataPoints.filter(p => p > 0);
+            const totalScore = dataPoints.reduce((a, b) => a + b, 0);
+            const avg = nonZeroDays.length ? Math.round(totalScore / nonZeroDays.length) : 0;
+            DOM.statAvgScore.textContent = `${avg}%`;
+            DOM.statAvgScore.className = `font-mono text-xl font-bold ${avg >= 80 ? 'text-green-400' : avg >= 50 ? 'text-blue-400' : 'text-white'}`;
+
+            const maxScore = Math.max(...dataPoints);
+            const bestIndex = dataPoints.lastIndexOf(maxScore);
+            if (maxScore > 0) {
+                const bestDate = rawData[bestIndex].date;
+                DOM.statBestDay.textContent = new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(bestDate);
+                DOM.statBestDay.className = "font-display text-sm font-bold text-purple-300";
+            } else {
+                DOM.statBestDay.textContent = "-";
+                DOM.statBestDay.className = "font-display text-sm font-bold text-gray-500";
+            }
+
+            // Momentum (First 3 vs Last 3 in this week view)
+            const first3 = dataPoints.slice(0,3).reduce((a,b)=>a+b,0)/3;
+            const last3 = dataPoints.slice(4).reduce((a,b)=>a+b,0)/3;
+            
+            let trendIcon = '→';
+            let trendColor = 'text-gray-400';
+            if (last3 > first3 + 5) { trendIcon = '↗'; trendColor = 'text-green-400'; }
+            else if (last3 < first3 - 5) { trendIcon = '↘'; trendColor = 'text-red-400'; }
+            DOM.statMomentum.innerHTML = `<span class="${trendColor} text-lg">${trendIcon}</span>`;
+
+            // --- 3. Style (Colored Graph - Purple/Blue Gradient) ---
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(139, 92, 246, 0.5)'); // Purple top
+            gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)'); // Transparent bottom
+
+            // --- 4. Chart Construction ---
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Completion',
+                        data: dataPoints,
+                        borderWidth: 3,
+                        borderColor: '#8b5cf6', // Solid Purple Line (No Red)
+                        backgroundColor: gradient, // Gradient Fill
+                        fill: true, // Enable Fill
+                        tension: 0.4, // Smooth Curves
+                        pointBackgroundColor: '#18181b', 
+                        pointBorderColor: '#8b5cf6', 
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointHoverBorderWidth: 2,
+                        pointHoverBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#8b5cf6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(20, 20, 25, 0.95)',
+                            titleColor: '#fff',
+                            titleFont: { family: "'Outfit', sans-serif", size: 13 },
+                            bodyColor: '#e2e8f0',
+                            bodyFont: { family: "'Inter', sans-serif", size: 12 },
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 12,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    const val = context.parsed.y;
+                                    const idx = context.dataIndex;
+                                    const raw = rawData[idx];
+                                    return [
+                                        `Score: ${val}%`,
+                                        `Completed: ${raw.completed}/${raw.total}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 105, 
+                            grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                            ticks: { display: false } 
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { 
+                                color: '#a1a1aa', 
+                                font: { size: 11, family: "'JetBrains Mono', monospace" } 
+                            }
+                        }
+                    }
+                }
+            });
         };
 
         // --- View Switching ---
@@ -481,16 +1047,24 @@
         };
 
         const updateInsightsUI = () => {
+            // Render the graph always in insights view
+            setTimeout(renderChart, 100);
+
             if(insightType === 'monthly') {
-                DOM.btnMonthly.className = "px-4 py-2 rounded-lg text-sm font-medium transition-all bg-white/10 text-white shadow";
+                DOM.btnMonthly.className = "px-4 py-2 rounded-lg text-sm font-medium transition-all bg-white/10 text-white shadow-sm";
                 DOM.btnDaily.className = "px-4 py-2 rounded-lg text-sm font-medium transition-all text-gray-400 hover:text-white";
                 DOM.dailyViewToggles.classList.add('hidden');
+                // SHOW GRAPH on Monthly View
+                DOM.graphContainer.classList.remove('hidden');
                 renderMonthlyReport();
             } else {
                 DOM.btnMonthly.className = "px-4 py-2 rounded-lg text-sm font-medium transition-all text-gray-400 hover:text-white";
                 DOM.btnDaily.className = "px-4 py-2 rounded-lg text-sm font-medium transition-all bg-white/10 text-white shadow";
                 DOM.dailyViewToggles.classList.remove('hidden');
                 DOM.dailyViewToggles.classList.add('flex');
+                
+                // HIDE GRAPH on Daily View
+                DOM.graphContainer.classList.add('hidden');
                 
                 if(dailyViewMode === 'list') {
                     DOM.btnListMode.className = "p-2 rounded-lg transition-all bg-white/10 text-white shadow";
@@ -774,6 +1348,10 @@
         const saveTasks = () => localStorage.setItem('modern-todo-tasks', JSON.stringify(tasks));
 
         const updateUI = () => {
+            // Update Streak regardless of view
+            const streak = calculateStreak();
+            DOM.streakCount.textContent = streak;
+
             if (!isDailyView) return;
             
             updateGreeting(); 
@@ -939,7 +1517,18 @@
                 t.completed = !t.completed; 
                 if(t.completed) { 
                     triggerConfetti(); 
-                    showQuote(); 
+                    
+                    // Check if all tasks for today are now completed
+                    const nowStr = new Date().toISOString().split('T')[0];
+                    const tasksToday = tasks.filter(task => task.date.startsWith(nowStr));
+                    const allDone = tasksToday.length > 0 && tasksToday.every(task => task.completed);
+                    
+                    if (allDone && isSameDay(new Date(t.date), new Date())) {
+                        showStreakPopup();
+                    } else {
+                        showQuote();
+                    }
+
                     sendNotification('Goal Completed! 🎉', `You completed: ${t.text}`);
                 } 
                 saveTasks(); 
@@ -1036,7 +1625,7 @@
                     if (nowMs >= t.timerEnd) {
                         t.timerEnd = null;
                         t.timerPaused = null;
-                        sendNotification("Timer Finished! ⏱️", `Time is up for goal: "${t.text}"`);
+                        sendNotification("Timer Finished! ⌛️", `Time is up for goal: "${t.text}"`);
                         triggerConfetti(); 
                         saveTasks();
                     }
