@@ -5,14 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Goal Sync | Cyber Task Manager</title>
     
-    <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- Chart.js for Graphs -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -134,17 +131,14 @@
 </head>
 <body class="h-[100dvh] flex flex-col">
 
-    <!-- Ambient Background -->
     <div class="fixed inset-0 z-0 pointer-events-none">
         <div class="absolute inset-0 bg-grid"></div>
         <div class="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[100px] animate-float"></div>
         <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[100px] animate-float" style="animation-delay: -2s;"></div>
     </div>
 
-    <!-- Main App Container -->
     <div class="relative z-10 w-full max-w-4xl mx-auto h-full flex flex-col p-4 md:p-6 gap-4 md:gap-6">
         
-        <!-- Header -->
         <header class="flex flex-col md:flex-row justify-between items-center gap-4 shrink-0 animate-slide-up">
             <div class="flex items-center gap-4 w-full md:w-auto">
                 <div class="relative group shrink-0">
@@ -166,7 +160,6 @@
             </div>
 
             <div class="flex items-center gap-3 w-full md:w-auto">
-                <!-- Streak Display -->
                 <div id="streakContainer" class="glass-panel px-3 py-2 rounded-xl flex items-center gap-2 animate-pulse-glow border-orange-500/20 bg-orange-500/5">
                     <i data-lucide="flame" class="w-5 h-5 text-orange-500 fill-orange-500 animate-bounce-slight"></i>
                     <div class="flex flex-col leading-none">
@@ -185,12 +178,9 @@
             </div>
         </header>
 
-        <!-- Daily View Content -->
         <div id="dailyView" class="flex flex-col gap-4 flex-1 min-h-0 animate-slide-up relative">
             
-            <!-- Controls Row (Date & Progress) -->
             <div id="dailyHeaderContent" class="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
-                <!-- Date Nav -->
                 <div class="md:col-span-2 glass-panel rounded-2xl p-1.5 flex gap-2 items-center">
                     <button onclick="changeDate(-1)" class="p-3 hover:bg-white/5 rounded-xl text-gray-400 hover:text-white transition-colors touch-target"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
                     <div class="flex-1 flex items-center justify-center flex-col relative group cursor-pointer rounded-xl hover:bg-white/5 transition-colors py-2" onclick="openCalendar()">
@@ -202,7 +192,6 @@
                     <button id="todayBtn" onclick="goToToday()" class="hidden md:block px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold text-purple-300 mr-1">Today</button>
                 </div>
 
-                <!-- Progress -->
                 <div class="glass-panel rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden">
                     <div class="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-blue-500/5"></div>
                     <div class="flex justify-between items-end mb-2 relative z-10">
@@ -216,14 +205,10 @@
                 </div>
             </div>
 
-            <!-- Task List -->
-            <!-- Added pb-48 to allow scrolling above the input form -->
             <div id="taskList" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1 pb-48">
-                <!-- JS Injected -->
-            </div>
+                </div>
         </div>
 
-        <!-- Insights View -->
         <div id="monthlyView" class="hidden-view flex flex-col gap-6 flex-1 min-h-0 animate-slide-up pb-4">
             <div class="flex flex-wrap justify-between items-center gap-4 shrink-0">
                 <div class="glass-panel p-1 rounded-xl flex gap-1">
@@ -244,17 +229,14 @@
                 </div>
             </div>
             
-            <!-- Graph Container (Updated with Week Navigation) -->
             <div id="graphMainWrapper" class="glass-panel p-5 rounded-2xl shrink-0 flex flex-col gap-4">
                 
-                <!-- Graph Header -->
                 <div class="flex justify-between items-center border-b border-white/5 pb-3">
                     <div class="flex items-center gap-2">
                         <div class="p-2 bg-purple-500/20 rounded-lg text-purple-400"><i data-lucide="activity" class="w-4 h-4"></i></div>
                         <h3 class="font-bold text-white text-sm">Productivity Trend</h3>
                     </div>
                     
-                    <!-- Week Navigation Arrows -->
                     <div class="flex items-center gap-2 bg-white/5 rounded-lg p-1">
                         <button onclick="changeGraphWeek(-1)" class="p-1 hover:bg-white/10 rounded-md text-gray-400 hover:text-white transition-colors">
                             <i data-lucide="chevron-left" class="w-4 h-4"></i>
@@ -266,7 +248,6 @@
                     </div>
                 </div>
 
-                <!-- Top Stats Row -->
                 <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-2">
                     <div class="bg-white/5 rounded-xl p-3 flex flex-col items-center justify-center border border-white/5">
                         <span class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-1">Avg Score</span>
@@ -284,28 +265,23 @@
                     </div>
                 </div>
 
-                <!-- Chart Area -->
                 <div class="relative h-56 w-full min-h-0">
                     <canvas id="progressChart"></canvas>
                 </div>
             </div>
 
             <div id="reportContainer" class="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-1 pb-4">
-                <!-- JS Injected -->
-            </div>
+                </div>
         </div>
 
     </div>
 
-    <!-- Add Task Input -->
     <div id="inputContainer" class="fixed bottom-0 left-0 w-full z-50">
-        <!-- Gradient backdrop for readability -->
         <div class="absolute inset-0 bg-gradient-to-t from-[#050507] via-[#050507]/95 to-transparent pointer-events-none h-[150%] -top-[50%]"></div>
         
         <div class="relative w-full max-w-4xl mx-auto p-4 md:p-6">
             <form id="addTaskForm" class="glass-panel p-3 rounded-2xl flex flex-col sm:flex-row gap-3 shadow-2xl border-t border-white/10 bg-[#101015]/80 backdrop-blur-xl">
                 
-                <!-- Text Input Area -->
                 <div class="flex-1 relative">
                     <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500">
                         <i data-lucide="plus-circle" class="w-5 h-5"></i>
@@ -313,10 +289,8 @@
                     <input type="text" id="taskInput" placeholder="Add a new goal..." autocomplete="off" class="w-full bg-white/5 text-white placeholder-gray-500 text-base py-3 pl-11 pr-4 focus:outline-none rounded-xl border border-transparent focus:border-purple-500/50 focus:bg-white/10 transition-all h-12">
                 </div>
                 
-                <!-- Controls Row -->
                 <div class="flex items-center justify-between sm:justify-end gap-2">
                     
-                    <!-- Settings Group -->
                     <div class="flex items-center gap-2 flex-1 sm:flex-none">
                         <div class="relative group flex-1 sm:flex-none">
                             <input type="time" id="timeInput" class="w-full sm:w-[90px] glass-input text-white text-sm px-2 h-12 rounded-xl cursor-pointer text-center font-mono bg-white/5">
@@ -328,7 +302,6 @@
                         </button>
                     </div>
 
-                    <!-- Submit Button -->
                     <button type="submit" id="addBtn" class="bg-purple-600 hover:bg-purple-500 text-white h-12 w-12 flex items-center justify-center rounded-xl shadow-lg shadow-purple-600/20 transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shrink-0">
                         <i data-lucide="arrow-up" class="w-6 h-6"></i>
                     </button>
@@ -337,7 +310,6 @@
         </div>
     </div>
 
-    <!-- Quote Overlay -->
     <div id="quoteOverlay" class="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none opacity-0 transition-opacity duration-500 px-4">
         <div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
         <div id="quoteContent" class="relative bg-[#101012] border border-white/10 p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center transform scale-95 transition-transform duration-300">
@@ -349,7 +321,6 @@
         </div>
     </div>
 
-    <!-- Streak Week Popup -->
     <div id="streakPopup" class="fixed inset-0 z-[80] flex items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300 px-4">
         <div class="absolute inset-0 bg-black/90 backdrop-blur-md"></div>
         <div id="streakPopupContent" class="relative bg-[#101012] border border-orange-500/30 p-6 rounded-3xl shadow-[0_0_50px_rgba(249,115,22,0.2)] w-full max-w-md text-center transform scale-95 transition-all duration-500">
@@ -362,10 +333,8 @@
             <h2 class="text-2xl font-display font-bold text-white mb-1">Daily Goals Complete!</h2>
             <p id="streakPopupCount" class="text-orange-400 font-bold tracking-widest uppercase text-sm mb-6">Current Streak: 0 Days</p>
 
-            <!-- Weekly Visual Grid -->
             <div id="weeklyStreakGrid" class="flex justify-between items-center gap-2 mb-8 bg-white/5 p-4 rounded-2xl border border-white/5">
-                <!-- JS Injected Circles -->
-            </div>
+                </div>
 
             <button onclick="closeStreakPopup()" class="btn-glow bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold py-3 px-8 rounded-xl text-sm w-full shadow-lg shadow-orange-500/20">
                 Keep the Streak Alive!
@@ -373,7 +342,6 @@
         </div>
     </div>
     
-    <!-- PDF Selection Modal -->
     <div id="pdfModal" class="fixed inset-0 z-[90] flex items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300 px-4">
         <div class="absolute inset-0 bg-black/90 backdrop-blur-md"></div>
         <div id="pdfModalContent" class="relative bg-[#101012] border border-purple-500/30 p-6 rounded-3xl shadow-[0_0_50px_rgba(139,92,246,0.2)] w-full max-w-md transform scale-95 transition-all duration-500 flex flex-col gap-4">
@@ -385,7 +353,6 @@
             
             <p class="text-gray-400 text-sm mb-2">Select the format for your productivity report:</p>
 
-            <!-- Option 1: Monthly Daily List (Updated) -->
             <button onclick="generatePDF('list')" class="flex items-center gap-4 bg-white/5 hover:bg-white/10 p-4 rounded-2xl border border-white/10 hover:border-purple-500/50 transition-all group text-left">
                 <div class="bg-purple-500/10 p-3 rounded-xl text-purple-400 group-hover:scale-110 transition-transform">
                     <i data-lucide="list" class="w-6 h-6"></i>
@@ -396,7 +363,6 @@
                 </div>
             </button>
 
-            <!-- Option 2: Visual Calendar (Updated with Icons) -->
             <button onclick="generatePDF('calendar')" class="flex items-center gap-4 bg-white/5 hover:bg-white/10 p-4 rounded-2xl border border-white/10 hover:border-blue-500/50 transition-all group text-left">
                 <div class="bg-blue-500/10 p-3 rounded-xl text-blue-400 group-hover:scale-110 transition-transform">
                     <i data-lucide="calendar" class="w-6 h-6"></i>
@@ -407,7 +373,6 @@
                 </div>
             </button>
 
-            <!-- Option 3: Weekly Graph -->
             <button onclick="generatePDF('graph')" class="flex items-center gap-4 bg-white/5 hover:bg-white/10 p-4 rounded-2xl border border-white/10 hover:border-pink-500/50 transition-all group text-left">
                 <div class="bg-pink-500/10 p-3 rounded-xl text-pink-400 group-hover:scale-110 transition-transform">
                     <i data-lucide="activity" class="w-6 h-6"></i>
@@ -420,7 +385,6 @@
         </div>
     </div>
 
-    <!-- Toast Container -->
     <div id="toastContainer" class="fixed top-4 left-4 right-4 sm:left-auto sm:right-6 sm:w-auto z-[70] flex flex-col gap-3 pointer-events-none items-center sm:items-end"></div>
 
     <script>
@@ -868,27 +832,33 @@
                 chartInstance.destroy();
             }
 
-            // --- 1. Prepare Data based on currentGraphDate (Week View) ---
+            // --- 1. Prepare Data based on Calendar Week (Mon-Sun) ---
             const daysData = getAggregatedDays();
             const labels = [];
             const dataPoints = [];
             const rawData = []; 
             
-            // Calculate Start of the week (7 days ending on currentGraphDate)
-            // Or better: Show the 7 days ending at currentGraphDate? 
-            // Let's do: 7 days ENDING on currentGraphDate to keep logic simple similar to "Last 7 Days"
+            // Calculate the Monday of the week relative to currentGraphDate
+            const currentDay = currentGraphDate.getDay(); // 0 (Sun) to 6 (Sat)
+            // If it's Sunday (0), we go back 6 days to get Monday. Otherwise we go back (day - 1)
+            const distanceToMonday = currentDay === 0 ? 6 : currentDay - 1;
             
-            // Format range text
-            const endDate = new Date(currentGraphDate);
-            const startDate = new Date(currentGraphDate);
-            startDate.setDate(endDate.getDate() - 6);
+            const startOfWeek = new Date(currentGraphDate);
+            startOfWeek.setDate(currentGraphDate.getDate() - distanceToMonday);
             
-            const rangeStr = `${new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric'}).format(startDate)} - ${new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric'}).format(endDate)}`;
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6);
+            
+            // Format range text for the header
+            const rangeStr = `${new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric'}).format(startOfWeek)} - ${new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric'}).format(endOfWeek)}`;
             DOM.graphDateRange.textContent = rangeStr;
 
-            for(let i=6; i>=0; i--) { 
-                const d = new Date(currentGraphDate);
-                d.setDate(d.getDate() - i);
+            // Loop from Monday (0) to Sunday (6)
+            for(let i=0; i<7; i++) { 
+                const d = new Date(startOfWeek);
+                d.setDate(startOfWeek.getDate() + i);
+                
+                // Construct Key for lookup
                 const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                 
                 const dayName = new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(d);
@@ -929,8 +899,11 @@
             
             let trendIcon = '→';
             let trendColor = 'text-gray-400';
-            if (last3 > first3 + 5) { trendIcon = '↗'; trendColor = 'text-green-400'; }
-            else if (last3 < first3 - 5) { trendIcon = '↘'; trendColor = 'text-red-400'; }
+            // Only show trend if there is data
+            if(totalScore > 0) {
+                if (last3 > first3 + 5) { trendIcon = '↗'; trendColor = 'text-green-400'; }
+                else if (last3 < first3 - 5) { trendIcon = '↘'; trendColor = 'text-red-400'; }
+            }
             DOM.statMomentum.innerHTML = `<span class="${trendColor} text-lg">${trendIcon}</span>`;
 
             // --- 3. Style (Colored Graph - Purple/Blue Gradient) ---
