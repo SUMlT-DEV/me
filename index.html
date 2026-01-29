@@ -149,11 +149,13 @@
             <!-- Image Section -->
             <div class="w-full md:w-1/2 flex justify-center md:justify-end">
                 <div class="relative w-full max-w-md aspect-[4/5] rounded-3xl overflow-hidden bg-black/50 border border-stroke">
+                    <!-- Changed to use the thumbnail endpoint with large size (w1000) which is often more reliable for embedding -->
                     <img 
-                        src="https://drive.google.com/file/d/1ZtiR_K4u8AS6W90JVYHKZUZ_m09o1xTl/view?usp=drive_link" 
+                        src="https://drive.google.com/thumbnail?id=1ZtiR_K4u8AS6W90JVYHKZUZ_m09o1xTl&sz=w1000" 
                         alt="Sumit" 
                         class="w-full h-full object-cover"
-                        onerror="this.src='https://placehold.co/600x800/111/444?text=Sumit'"
+                        referrerpolicy="no-referrer"
+                        onerror="this.src='https://placehold.co/600x800/111/444?text=Check+Drive+Permissions'"
                     >
                 </div>
             </div>
