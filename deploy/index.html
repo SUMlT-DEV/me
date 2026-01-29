@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instant Host - Modern</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-vsc-dark-plus.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body id="app-body" class="h-screen flex flex-col">
+
+    <nav class="h-14 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-4 sm:px-6 z-50">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <i class="fa-solid fa-bolt text-white text-sm"></i>
+            </div>
+            <h1 class="font-bold text-lg text-white tracking-tight">Instant<span class="text-blue-500">Host</span></h1>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <button id="reset-btn" class="hidden sm:flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm font-medium px-3 py-1.5 rounded-md hover:bg-slate-800">
+                <i class="fa-solid fa-rotate-right"></i> Reset
+            </button>
+            <button id="deploy-btn" class="group relative bg-white text-slate-900 px-5 py-2 rounded-full text-sm font-bold hover:bg-blue-50 transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(59,130,246,0.4)] flex items-center gap-2 overflow-hidden">
+                <span class="relative z-10">Deploy & Share</span>
+                <i class="fa-solid fa-paper-plane relative z-10 group-hover:translate-x-1 transition-transform"></i>
+                <div class="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-400 opacity-0 group-hover:opacity-10 transition-opacity"></div>
+            </button>
+        </div>
+    </nav>
+
+    <div class="flex border-b border-slate-800 bg-slate-900 global-tabs">
+        <button id="tab-code" class="flex-1 py-3 text-sm font-medium text-slate-400 tab-btn active transition-all">
+            <i class="fa-solid fa-code mr-2"></i> Code
+        </button>
+        <button id="tab-preview" class="flex-1 py-3 text-sm font-medium text-slate-400 tab-btn transition-all">
+            <i class="fa-solid fa-eye mr-2"></i> Preview
+        </button>
+    </div>
+
+    <main id="main-layout" class="flex-1 flex overflow-hidden relative">
+        
+        <div id="pane-editor" class="w-full h-full flex flex-col bg-[#1e1e1e]">
+            <div class="h-9 bg-[#1e1e1e] flex items-center px-4 border-b border-slate-800">
+                <div class="flex items-center gap-2 px-3 py-1 bg-[#2d2d2d] rounded-t-sm text-xs text-blue-400 border-t border-blue-500/50">
+                    <i class="fa-brands fa-html5"></i>
+                    <span class="font-mono text-slate-200">index.html</span>
+                </div>
+            </div>
+
+            <div class="editor-stack flex-1 relative">
+                <pre id="code-highlight" aria-hidden="true"><code class="language-html" id="code-content"></code></pre>
+                <textarea id="code-input" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder=""></textarea>
+            </div>
+        </div>
+
+        <div id="pane-preview" class="hidden w-full h-full flex-col bg-white">
+            <div class="h-9 bg-slate-100 border-b border-slate-200 flex items-center px-3 gap-2 flex-none">
+                <div class="flex gap-1.5">
+                    <div class="w-2.5 h-2.5 rounded-full bg-red-400/80"></div>
+                    <div class="w-2.5 h-2.5 rounded-full bg-amber-400/80"></div>
+                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-400/80"></div>
+                </div>
+                <div class="flex-1 bg-white mx-3 h-5 rounded border border-slate-200 flex items-center px-2">
+                    <i class="fa-solid fa-lock text-[8px] text-slate-400 mr-1.5"></i>
+                    <span class="text-[10px] text-slate-500 font-mono">localhost:3000</span>
+                </div>
+                <i class="fa-solid fa-rotate-right text-slate-400 text-xs cursor-pointer hover:text-slate-600"></i>
+            </div>
+            
+            <iframe id="preview-frame" class="w-full flex-1 border-none bg-white"></iframe>
+        </div>
+
+    </main>
+
+    <div id="fullscreen-container" class="hidden w-full h-full bg-white">
+        <iframe id="fullscreen-frame" class="w-full h-full border-none"></iframe>
+    </div>
+
+    <div id="share-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl animate-fade-in relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-circle-check text-emerald-500"></i>
+                    Published
+                </h3>
+                <button id="close-modal" class="text-slate-500 hover:text-white transition-colors w-8 h-8 rounded-full hover:bg-slate-800 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <p class="text-slate-400 text-sm mb-4">Your site is live! Anyone with this link can view it.</p>
+            
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-1.5 flex items-center gap-2 mb-6 shadow-inner">
+                <input id="share-url" readonly type="text" class="bg-transparent text-blue-400 text-xs w-full focus:outline-none font-mono px-3 py-2" value="...">
+                <button id="copy-btn" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg transition-all text-xs font-medium border border-slate-700">
+                    Copy
+                </button>
+            </div>
+
+            <div class="flex gap-3">
+                <a id="view-live-btn" href="#" target="_blank" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl text-center font-semibold text-sm transition-all shadow-lg shadow-blue-600/20">
+                    Open in New Tab <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-xs"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-6 right-6 bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-3 z-[110]">
+        <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+        <span id="toast-msg" class="text-sm font-medium">Notification</span>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
