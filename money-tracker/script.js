@@ -582,11 +582,13 @@ class ExpenseTracker {
 
                 y += 15;
 
+                // --- ADDED DATE TO INCOME TABLE ---
                 if (m.incomeTransactions.length > 0) {
                     doc.autoTable({
                         startY: y,
-                        head: [['Income Source', 'Description', 'Amount']],
+                        head: [['Date', 'Income Source', 'Description', 'Amount']], // Added Date Header
                         body: m.incomeTransactions.map(t => [
+                            t.date, // Added Date Value
                             t.category, 
                             t.description || '', 
                             `Rs. ${t.amount.toLocaleString('en-IN')}`
@@ -598,11 +600,13 @@ class ExpenseTracker {
                     y = doc.lastAutoTable.finalY + 15;
                 }
 
+                // --- ADDED DATE TO EXPENSE TABLE ---
                 if (m.expenseTransactions.length > 0) {
                     doc.autoTable({
                         startY: y,
-                        head: [['Expense', 'Description', 'Amount']],
+                        head: [['Date', 'Expense', 'Description', 'Amount']], // Added Date Header
                         body: m.expenseTransactions.map(t => [
+                            t.date, // Added Date Value
                             t.category, 
                             t.description || '', 
                             `Rs. ${t.amount.toLocaleString('en-IN')}`
