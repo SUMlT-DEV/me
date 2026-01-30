@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Periodic Table: Neo-Brutalist</title>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Periodic Table</h1>
+    </header>
+
+    <div class="table-wrapper">
+        <div class="periodic-table" id="table-container">
+            <div class="label-spacer label-lanth">57-71</div>
+            <div class="label-spacer label-actin">89-103</div>
+        </div>
+    </div>
+
+    <div class="legend-container">
+        <div class="legend-title">Element Classification</div>
+        <div class="legend-list" id="legend"></div>
+    </div>
+
+    <div class="overlay" id="overlay">
+        <div class="focus-card" id="focus-card">
+            <button class="close-btn" onclick="closeModal()">×</button>
+            
+            <div class="card-header" id="card-header">
+                <div class="card-symbol-large" id="modal-symbol"></div>
+                <div class="card-number-large" id="modal-number"></div>
+            </div>
+
+            <div class="card-body">
+                <div class="card-name-large" id="modal-name"></div>
+                <div class="card-category-badge" id="modal-category"></div>
+
+                <div class="info-row">
+                    <span class="info-label">Atomic Mass</span>
+                    <span class="info-value" id="modal-mass"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Phase (STP)</span>
+                    <span class="info-value" id="modal-phase"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Period</span>
+                    <span class="info-value" id="modal-period"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Group</span>
+                    <span class="info-value" id="modal-group"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Electron Config</span>
+                    <span class="info-value" id="modal-config"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
